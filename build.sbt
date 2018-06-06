@@ -8,7 +8,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.3.2",
   "joda-time" % "joda-time" % "2.5",
   "org.slf4j" % "jul-to-slf4j" % "1.7.10",
-  "com.ning" % "async-http-client" % "1.7.12",
+  "org.asynchttpclient" % "async-http-client" % "2.4.9",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.1.4",
   "junit" % "junit" % "4.11" % "test",
   "org.mockito" % "mockito-all" % "1.10.8" % "test",

@@ -7,15 +7,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.ListenableFuture;
-import com.ning.http.client.Realm;
-import com.ning.http.client.Request;
-import com.ning.http.client.RequestBuilder;
-import com.ning.http.client.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.asynchttpclient.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,14 +44,12 @@ public class AbstractJsonRestClient<CE extends ClientException, RE extends Clien
         if (url == null) {
             throw new IllegalStateException("Must specify url");
         }
-        this.url = url.endsWith("/") ? StringUtils.substringBeforeLast(url,"/") : url;
+        this.url = url.endsWith("/") ? StringUtils.substringBeforeLast(url, "/") : url;
         if (username == null || password == null) {
             throw new IllegalStateException("Must specify username and password");
         }
-        this.realm = new Realm.RealmBuilder()
+        this.realm = new Realm.Builder(username, password)
                 .setScheme(Realm.AuthScheme.BASIC)
-                .setPrincipal(username)
-                .setPassword(password)
                 .setUsePreemptiveAuth(true)
                 .build();
         this.mapper = createMapper();
@@ -65,7 +57,7 @@ public class AbstractJsonRestClient<CE extends ClientException, RE extends Clien
     }
 
     protected AsyncHttpClient createDefaultAsyncHttpClient() {
-        return new AsyncHttpClient();
+        return new DefaultAsyncHttpClient();
     }
 
     /**
@@ -134,19 +126,15 @@ public class AbstractJsonRestClient<CE extends ClientException, RE extends Clien
     }
 
     protected <T> ListenableFuture<T> submit(Request request, AsyncCompletionHandler<T> handler) {
-        try {
-            if (request.getStringData() != null) {
-                logger.debug("Request {} {}\n{}", request.getMethod(), request.getUrl(), request.getStringData());
-            } else if (request.getByteData() != null) {
-                logger.debug("Request {} {} {} {} bytes", request.getMethod(), request.getUrl(), //
-                        request.getHeaders().getFirstValue("Content-type"), request.getByteData().length);
-            } else {
-                logger.debug("Request {} {}", request.getMethod(), request.getUrl());
-            }
-            return asyncClient.executeRequest(request, handler);
-        } catch (IOException e) {
-            throw createException(e.getMessage(), e);
+        if (request.getStringData() != null) {
+            logger.debug("Request {} {}\n{}", request.getMethod(), request.getUrl(), request.getStringData());
+        } else if (request.getByteData() != null) {
+            logger.debug("Request {} {} {} {} bytes", request.getMethod(), request.getUrl(), //
+                    request.getHeaders().get("Content-type"), request.getByteData().length);
+        } else {
+            logger.debug("Request {} {}", request.getMethod(), request.getUrl());
         }
+        return asyncClient.executeRequest(request, handler);
     }
 
 
